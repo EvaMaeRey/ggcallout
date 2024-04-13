@@ -268,7 +268,7 @@ remotes::install_github("EvaMaeRey/ggcallout")
 
 Once functions are exported you can remove go to two colons, and when things are are really finalized, then go without colons (and rearrange your readme...)
 
-```{r, eval = F}
+```{r, eval = T}
 library(tidyverse)
 library(ggcallout)  ##<< change to your package name here
 gapminder::gapminder |> 
@@ -277,7 +277,10 @@ gapminder::gapminder |>
   aes(x = gdpPercap, y = lifeExp, id = country) + 
   geom_point(color = "darkgrey") + 
   ggcallout:::geom_labellink(which_id = "Chile",
-                             label_direction = 45)
+                             label_direction = 45) + 
+  ggcallout:::geom_labellink(which_id = "Brazil",
+                             label_direction = -65,
+                             label = "Brazil is a pretty\n interesting case")
 
 last_plot() + 
   scale_x_log10()

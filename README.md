@@ -304,11 +304,23 @@ gapminder::gapminder |>
   aes(x = gdpPercap, y = lifeExp, id = country) + 
   geom_point(color = "darkgrey") + 
   ggcallout:::geom_labellink(which_id = "Chile",
-                             label_direction = 45)
+                             label_direction = 45) + 
+  ggcallout:::geom_labellink(which_id = "Brazil",
+                             label_direction = -65,
+                             label = "Brazil is a pretty\n interesting case")
+#> Warning in ggcallout:::geom_labellink(which_id = "Brazil", label_direction =
+#> -65, : Ignoring unknown parameters: `label`
+```
+
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
 
 last_plot() + 
   scale_x_log10()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
 
 ## Phase 3: Settling and testing 🚧 ✅
 
@@ -376,8 +388,8 @@ all[11:17]
 #> [3] "[1] stats     graphics  grDevices utils     datasets  methods   base     "
 #> [4] ""                                                                         
 #> [5] "other attached packages:"                                                 
-#> [6] " [1] lubridate_1.9.2      forcats_1.0.0        stringr_1.5.0       "      
-#> [7] " [4] dplyr_1.1.0          purrr_1.0.1          readr_2.1.4         "
+#> [6] " [1] ggcallout_0.0.0.9000 lubridate_1.9.2      forcats_1.0.0       "      
+#> [7] " [4] stringr_1.5.0        dplyr_1.1.0          purrr_1.0.1         "
 ```
 
 ## `devtools::check()` report
@@ -401,7 +413,9 @@ fs::dir_tree(recurse = T)
 #> ├── README_files
 #> │   └── figure-gfm
 #> │       ├── unnamed-chunk-5-1.png
-#> │       └── unnamed-chunk-5-2.png
+#> │       ├── unnamed-chunk-5-2.png
+#> │       ├── unnamed-chunk-8-1.png
+#> │       └── unnamed-chunk-8-2.png
 #> ├── ggcallout.Rproj
 #> ├── man
 #> └── readme2pkg.template.Rproj
