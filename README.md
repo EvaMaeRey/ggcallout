@@ -1,14 +1,15 @@
 
-  - [*To the reader*](#to-the-reader)
   - [Part 0. Proposal](#part-0-proposal)
   - [Part I. Work out functionality 🚧
     ✅](#part-i-work-out-functionality--)
-      - [Try it out](#try-it-out)
+      - [Try out compute function](#try-out-compute-function)
+      - [Trying out Stat within plot](#trying-out-stat-within-plot)
+  - [Pass stat to user-facing
+    function](#pass-stat-to-user-facing-function)
   - [Part II. Packaging and documentation 🚧
     ✅](#part-ii-packaging-and-documentation--)
       - [Phase 1. Minimal working
         package](#phase-1-minimal-working-package)
-      - [Phase 2: Listen & iterate 🚧 ✅](#phase-2-listen--iterate--)
       - [Phase 3: Settling and testing 🚧
         ✅](#phase-3-settling-and-testing--)
       - [Phase 4. Promote to wider audience… 🚧
@@ -21,33 +22,22 @@
       - [`devtools::check()` report](#devtoolscheck-report)
       - [Package directory file tree](#package-directory-file-tree)
 
-# *To the reader*
+<!-- badges: start -->
 
-Welcome to the R package building helper *readme2pkg.template*\!
-
-Below, is a readme that provides steps for building a package. This
-readme acts as a worksheet, checklist, and control document as functions
-used in package building are included within and can be used in
-advancing development.
-
-We’ll use the `{readme2pkg}` helper package to send code chunks to
-different directories in the package.
-
-To install `{readme2pkg}`:
-
-``` 
-
-remotes::install_github("EvaMaeRey/readme2pkg")
-```
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
 
 # Part 0. Proposal
 
-Proposing the {xxxx} package\! 🦄
+Proposing the {ggcallout} package\! 🦄
 <!-- (typical package introduction write up; but actually aspirational) -->
 
-The goal of {xxxx} is to make … easier.
+The goal of {ggcallout} is to make callouts easier. Maybe just a proof
+of concept and we’ll just look at scatterplots to start.
 
 Without the package, we live in the effort-ful world that follows 🏋:
+It’s so effortful, I’m not gonna save filling this out for later…
 
 ``` r
 x <- 4
@@ -56,16 +46,28 @@ x <- 4
 #> [1] 8
 ```
 
-With the {xxxx} package, we’ll live in a different world (🦄 🦄 🦄) where
-the task is a snap 🫰:
+With the {ggcallout} package, we’ll live in a different world (🦄 🦄 🦄)
+where the task is a snap 🫰:
 
 Proposed API:
 
 ``` 
 
-library(xxxxx)
+library(ggcallout)
 
-xxxxx::times_two(x = 4)
+gapminder::gapminder |>
+  filter(year == 2002) |>
+ggplot() + 
+  aes(gdpPercap, lifeExp, id = country) +
+  geom_point(color = "darkgray") + 
+  # labels as 'Norway' with default link length and padding
+  geom_labellink(which_id = "Norway",
+                 label_direction = -120) +
+  # label is specified by the user               
+  geom_labellink(which_id = "Brazil",
+                 label = "People want to\nknow about Brazil",
+                 label_direction = -70,
+                 prop_range = .2) + 
 ```
 
 # Part I. Work out functionality 🚧 ✅
@@ -73,18 +75,192 @@ xxxxx::times_two(x = 4)
 Here is a function that will do some work…
 
 ``` r
-times_two <- function(x){
-  
-  x*2
-  
-}
+readme2pkg::chunk_to_r("StatLabellink")
 ```
 
-## Try it out
+``` r
+compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_range = .1, prop_pointer_pad = .175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
+  
+  if(is.null(data$id)){data$id <- "hello world"}
+  if(is.null(which_index)){which_index <- which(data$id == which_id)}
+  
+  data$default_label <- data$id
+  
+  xmean <- mean(data$x)
+  ymean <- mean(data$y)
+  
+  range_x <- diff(range(data$x))
+  range_y <- diff(range(data$y)) # look at range of plot?
+  xdir <- cos(pi*label_direction/180)
+  ydir <- sin(pi*label_direction/180)
+  xpush <- range_x * prop_range * xdir
+  ypush <- range_y * prop_range * ydir
+  
+  more_x_than_y <- abs(xdir) > abs(ydir)
+  
+  if(is.null(hjust)){hjust <- ifelse(more_x_than_y, sign(xdir) != 1, .5)}
+  if(is.null(vjust)){vjust <- ifelse(more_x_than_y, .5, sign(ydir) != 1)}
+
+  data |> 
+    dplyr::mutate(x = x + xpush) |>
+    dplyr::mutate(y = y + ypush) |>
+    dplyr::mutate(xend = .data$x - xpush*(1-prop_pointer_pad)) |>
+    dplyr::mutate(yend = .data$y - ypush*(1-prop_pointer_pad)) |>
+    dplyr::mutate(hjust = hjust) |>
+    dplyr::mutate(vjust = vjust) |> 
+    dplyr::slice(which_index)
+  
+}
+
+StatLabellink <- ggplot2::ggproto("Labellink",
+                         ggplot2::Stat,
+                         compute_panel = compute_labellink,
+                         default_aes = 
+                           ggplot2::aes(label = ggplot2::after_stat(default_label)))
+```
+
+## Try out compute function
 
 ``` r
-times_two(4)
-#> [1] 8
+library(tidyverse)
+#> ── Attaching core tidyverse packages ─────────────────── tidyverse 2.0.0.9000 ──
+#> ✔ dplyr     1.1.0          ✔ readr     2.1.4     
+#> ✔ forcats   1.0.0          ✔ stringr   1.5.0     
+#> ✔ ggplot2   3.4.4.9000     ✔ tibble    3.2.1     
+#> ✔ lubridate 1.9.2          ✔ tidyr     1.3.0     
+#> ✔ purrr     1.0.1          
+#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+#> ✖ dplyr::filter() masks stats::filter()
+#> ✖ dplyr::lag()    masks stats::lag()
+#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+gapminder::gapminder |>
+  filter(year == 2002) |> 
+  select(id = country, x = lifeExp, y = gdpPercap) |>
+  compute_labellink(which_id = "Chile")
+#> # A tibble: 1 × 8
+#>   id        x     y default_label  xend   yend hjust vjust
+#>   <fct> <dbl> <dbl> <fct>         <dbl>  <dbl> <lgl> <dbl>
+#> 1 Chile  74.8 7636. Chile          77.3 10229. TRUE    0.5
+
+gapminder::gapminder |>
+  filter(year == 2002) |> 
+  select(id = country, x = lifeExp, y = gdpPercap) |>
+  compute_labellink(which_index = 3)
+#> # A tibble: 1 × 8
+#>   id          x     y default_label  xend  yend hjust vjust
+#>   <fct>   <dbl> <dbl> <fct>         <dbl> <dbl> <lgl> <dbl>
+#> 1 Algeria  68.0 2145. Algeria        70.5 4738. TRUE    0.5
+
+gapminder::gapminder |>
+  filter(year == 2002) |> 
+  select(x = lifeExp, y = gdpPercap) |>
+  compute_labellink(which_index = 3)
+#> Warning: Unknown or uninitialised column: `id`.
+#> # A tibble: 1 × 8
+#>       x     y id          default_label  xend  yend hjust vjust
+#>   <dbl> <dbl> <chr>       <chr>         <dbl> <dbl> <lgl> <dbl>
+#> 1  68.0 2145. hello world hello world    70.5 4738. TRUE    0.5
+```
+
+## Trying out Stat within plot
+
+``` r
+gapminder::gapminder |>
+  filter(year == 2002) |> 
+  select(id = country, x = lifeExp, y = gdpPercap) |>
+  ggplot() + 
+  aes(x = x, y = y, id = id) + 
+  geom_point() + 
+  layer("label", "labellink", position = "identity",
+        params = list(which_id = "Chile")) + 
+  layer("segment", "labellink", position = "identity",
+        params = list(which_id = "Chile")) + 
+  scale_x_log10()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+
+ggplot(cars) + 
+  aes(speed, dist) + 
+  geom_point() + 
+  layer("segment", 
+        "labellink", 
+        position = "identity", 
+        # data = cars[23,], 
+        params = list(which_index = 23, arrow = 
+                        arrow(ends = "last", 
+                              length = unit(.1, "inches"), 
+                              type = "closed"))) +
+  layer("label", 
+        "labellink", 
+        position = "identity",  
+        # data = cars[23,],
+        params = list(which_index = 23, 
+                      label = "let me tell you about this point" |> str_wrap(15),
+                      alpha = 0,
+                      lineheight = .8,
+                      label.size = 0,
+                      label.padding = unit(0.7, "lines"))) + 
+  layer("point",
+        "labellink",
+        position = "identity",
+        # data = cars[23,],
+        params = list(which_index = 23, 
+                      color = "red"))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+
+# Pass stat to user-facing function
+
+``` r
+readme2pkg::chunk_to_r("geom_labellink")
+```
+
+``` r
+geom_labellink <- function(  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE, ...){
+
+  
+  list( 
+    
+    ggplot2::layer("segment", 
+        "labellink", 
+        position = position, 
+        data = data, 
+        mapping = mapping,
+            show.legend = show.legend,
+    inherit.aes = inherit.aes,
+        params = list(arrow = 
+                        arrow(ends = "last", 
+                              length = unit(.1, "inches"), 
+                              type = "closed"), na.rm = na.rm,
+                      ...)),
+    
+  ggplot2::layer("label", 
+        "labellink", 
+        position = position, 
+        data = data, 
+        mapping = mapping, 
+            show.legend = show.legend,
+    inherit.aes = inherit.aes,
+        params = list(
+                      alpha = 0,
+                      lineheight = .8,
+                      label.size = 0,
+                      label.padding = unit(0.4, "lines"), 
+                      na.rm = na.rm,
+                      ...)) 
+  )
+
+  
+}
 ```
 
 # Part II. Packaging and documentation 🚧 ✅
@@ -94,110 +270,52 @@ times_two(4)
 ### Bit A. Created package archetecture, running `devtools::create(".")` in interactive session. 🚧 ✅
 
 ``` r
-devtools::create(".")
+devtools::create(".") # Bit 1. 1X
+### Bit 2a: dependencies to functions using '::' syntax to pkg functions 
+usethis::use_package("ggplot2") # Bit 2b: document dependencies
+usethis::use_package("dplyr")
+# Bit 3: send code chunk with function to R folder
+devtools::check(pkg = ".")  # Bit 4: check that package is minimally viable
+devtools::install(pkg = ".", upgrade = "never") # Bit 5: install package locally
+usethis::use_lifecycle_badge("experimental") # Bit 6: add lifecycle badge
+# Bit 7 (below): Write traditional readme
+# Bit 8: Compile readme
+# Bit 9: Push to github
+# Bit 10: listen and iterate
 ```
 
-### Bit B. Managing [dependencies](https://r-pkgs.org/dependencies-in-practice.html) if they exist 🚧 ✅
+### Bit 7. Write traditional README that uses built package (also serves as a test of build). 🚧 ✅
 
-Dependencies – use of non-base R functions within your function – must
-be declared in your package.
-
-This means …
-
-1.  you’ll use the `::` notation, e.g. `package::function()` in your
-    functions when you use another package’s functions.  
-2.  you’ll document package dependencies to your DESCRIPTION file – this
-    can be done automatically with `usethis::use_package`, the example
-    is the case where ggplot2 is a dependency:
-
-<!-- end list -->
-
-``` r
-usethis::use_package("ggplot2")
-```
-
-### Bit C. Moved functions [R code folder](https://r-pkgs.org/code.html)? 🚧 ✅
-
-Use new {readme2pkg} function to do this from readme…
-
-``` r
-readme2pkg::chunk_to_r(chunk_name = "times_two")
-```
-
-### Bit D. Run [`devtools::check()`](https://r-pkgs.org/whole-game.html#check) and address errors. 🚧 ✅
-
-``` r
-devtools::check(pkg = ".")
-```
-
-devtools check will document the functions for you.
-
-### Bit E. [Install](https://r-pkgs.org/whole-game.html#install) and restart your brand new package\!\! 🚧 ✅
-
-``` r
-devtools::install(pkg = ".", upgrade = "never")
-```
-
-### Bit F. Write traditional README that uses built package (also serves as a test of build). 🚧 ✅
-
-The goal of the {xxxx} package is to …
+The goal of the {ggcallout} package is to …
 
 Install package with:
 
-    remotes::install_github("GithubCoolUser/mypacakge")
+    remotes::install_github("EvaMaeRey/ggcallout")
 
 Once functions are exported you can remove go to two colons, and when
 things are are really finalized, then go without colons (and rearrange
 your readme…)
 
 ``` r
-library(mypackage)  ##<< change to your package name here
-mypackage:::times_two(10)
+library(tidyverse)
+library(ggcallout)  ##<< change to your package name here
+gapminder::gapminder |> 
+  filter(year == 2002) |>
+  ggplot() + 
+  aes(x = gdpPercap, y = lifeExp, id = country) + 
+  geom_point(color = "darkgrey") + 
+  ggcallout:::geom_labellink(which_id = "Chile",
+                             label_direction = 45)
+
+last_plot() + 
+  scale_x_log10()
 ```
-
-### Bit G. Add [lifecycle badge](https://r-pkgs.org/lifecycle.html) (experimental) 🚧 ✅
-
-``` r
-usethis::use_lifecycle_badge("experimental")
-```
-
-### Bit H. Compile README.Rmd 🚧 ✅
-
-### Bit I. Push to github. 🚧 ✅
-
-RStudio: Console/Terminal/RMarkdown/Jobs:
-
-Terminal -\> git add . -\> git commit -m “first commit” -\> git push
-
-## Phase 2: Listen & iterate 🚧 ✅
-
-Try to get feedback from experts on API, implementation, default
-decisions, names. Is there already work that solves this problem?
-
-> “Hey Jordan, I know you are an expert in multiplication methods. I was
-> wondering if you’d have a look at the motivation and functionality in
-> my development {times.two} package found at
-> github.com/myusername/times.two”
-
-> “Hey Ella, I know you’ve done great worked on {times.three}. I think
-> my new project does something similar in terms API. I was wondering if
-> you’d have a look at the implementation. Code can be found in
-> github.com/myusername/times.two”
 
 ## Phase 3: Settling and testing 🚧 ✅
-
-In this phase you should start settling on function and argument names,
-decide which ones will be exported, and make those functions more robust
-and usable with examples, tests, messages and warnings.
 
 ### Bit A. Added a description and author information in the [DESCRIPTION file](https://r-pkgs.org/description.html) 🚧 ✅
 
 ### Bit B. Added [roxygen skeleton](https://r-pkgs.org/man.html)? 🚧 ✅
-
-Use a roxygen skeleton for auto documentation and making sure proposed
-functions are *exported*. (in RStudio ’Code -\> insert Roxygen Skeleton)
-Generally, early on, I don’t do much (anything) in terms of filling in
-the skeleton for documentation, because things may change.
 
 ### Bit C. Chosen a [license](https://r-pkgs.org/license.html)? 🚧 ✅
 
@@ -258,9 +376,9 @@ all[11:17]
 #> [2] "attached base packages:"                                                  
 #> [3] "[1] stats     graphics  grDevices utils     datasets  methods   base     "
 #> [4] ""                                                                         
-#> [5] "loaded via a namespace (and not attached):"                               
-#> [6] " [1] compiler_4.2.2  fastmap_1.1.1   cli_3.6.1       tools_4.2.2    "     
-#> [7] " [5] htmltools_0.5.4 rstudioapi_0.14 yaml_2.3.7      rmarkdown_2.20 "
+#> [5] "other attached packages:"                                                 
+#> [6] " [1] lubridate_1.9.2      forcats_1.0.0        stringr_1.5.0       "      
+#> [7] " [4] dplyr_1.1.0          purrr_1.0.1          readr_2.1.4         "
 ```
 
 ## `devtools::check()` report
@@ -274,7 +392,18 @@ devtools::check(pkg = ".")
 ``` r
 fs::dir_tree(recurse = T)
 #> .
+#> ├── DESCRIPTION
+#> ├── NAMESPACE
+#> ├── R
+#> │   ├── StatLabellink.R
+#> │   └── geom_labellink.R
 #> ├── README.Rmd
 #> ├── README.md
+#> ├── README_files
+#> │   └── figure-gfm
+#> │       ├── unnamed-chunk-5-1.png
+#> │       └── unnamed-chunk-5-2.png
+#> ├── ggcallout.Rproj
+#> ├── man
 #> └── readme2pkg.template.Rproj
 ```
