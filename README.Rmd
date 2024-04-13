@@ -141,9 +141,8 @@ gapminder::gapminder |>
 ```{r}
 gapminder::gapminder |>
   filter(year == 2002) |> 
-  select(id = country, x = lifeExp, y = gdpPercap) |>
   ggplot() + 
-  aes(x = x, y = y, id = id) + 
+  aes(id = country, x = lifeExp, y = gdpPercap) + 
   geom_point() + 
   layer("label", "labellink", position = "identity",
         params = list(which_id = "Chile")) + 
