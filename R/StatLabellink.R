@@ -1,7 +1,7 @@
 compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_range = .1, prop_pointer_pad = .0175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
   
   if(is.null(data$id)){data$id <- "hello world"}
-  if(is.null(which_index)){which_index <- which(data$id == which_id)}
+  if(is.null(which_index)){which_index <- which(data$id %in% which_id)}
   
   data$default_label <- data$id
   

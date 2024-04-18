@@ -82,7 +82,7 @@ readme2pkg::chunk_to_r("StatLabellink")
 compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_range = .1, prop_pointer_pad = .0175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
   
   if(is.null(data$id)){data$id <- "hello world"}
-  if(is.null(which_index)){which_index <- which(data$id == which_id)}
+  if(is.null(which_index)){which_index <- which(data$id %in% which_id)}
   
   data$default_label <- data$id
   
@@ -267,7 +267,7 @@ geom_labellink <- function(  mapping = NULL,
 
 ``` r
 gapminder::gapminder |> 
-  filter(year == 2002) |>
+  filter(year == 2002) |> 
   ggplot() + 
   aes(x = gdpPercap, y = lifeExp, id = country) + 
   geom_point(color = "darkgrey") + 
@@ -292,18 +292,162 @@ last_plot() +
 
 ``` r
 
+last_plot() %+% 
+  (gapminder::gapminder |> 
+  filter(year == 2002) |> 
+    filter(gdpPercap > 3000))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+
+``` r
+
+chickwts |>
+  ggplot() + 
+  aes(weight, weight) + 
+  geom_point() + 
+  geom_labellink(which_index = 2)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
+
+``` r
+
+chickwts |>
+  ggplot() + 
+  aes(weight, feed, id = weight) + 
+  geom_point() + 
+  geom_labellink(which_id = 179,
+                 label_direction = -45)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->
+
+``` r
+
+pressure |>
+  ggplot() + 
+  aes(temperature, pressure, id = temperature) + 
+  geom_point() + 
+  geom_path() + 
+  geom_labellink(which_id = 20,
+                 aes(label = "At a low temp of 20\n degrees pressure is low"),
+                 label_direction = 70) + 
+  geom_labellink(which_id = 300,
+                 label = "At 300 degress,\npressure is building",
+                 label_direction = 160) + 
+  geom_labellink(which_index = nrow(pressure),
+                 label = "At the highest temp in the study, we're\nin a high pressure situation") + 
+  ggstamp::stamp_label(x = 80, y = 425, 
+                       label = "You may have heard of the pressure dataset. But did you know these facinating details?" |> str_wrap(20))
+#> Warning in geom_labellink(which_id = 300, label = "At 300 degress,\npressure is
+#> building", : Ignoring unknown parameters: `label`
+#> Warning in geom_labellink(which_index = nrow(pressure), label = "At the highest
+#> temp in the study, we're\nin a high pressure situation"): Ignoring unknown
+#> parameters: `label`
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-6.png)<!-- -->
+
+``` r
+
+
+airquality |>
+  remove_missing() |>
+  ggplot() + 
+  aes(Temp, Ozone, id = Temp) + 
+  geom_point() + 
+  geom_labellink(which_index = 5,
+                 label_direction = 100,
+                 hjust = .5,
+                 prop_range = .2,
+                 label = "Here is a low temperature observation within the distribution" |> str_wrap(20))
+#> Warning: Removed 42 rows containing missing values or values outside the scale
+#> range.
+#> Warning in geom_labellink(which_index = 5, label_direction = 100, hjust = 0.5,
+#> : Ignoring unknown parameters: `label`
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-7.png)<!-- -->
+
+``` r
+anscombe |>
+  ggplot() + 
+  aes(x1, y1) + 
+  geom_point() + 
+  geom_labellink(which_index = 2,
+                 label = "This is an observation in Anscombe's first dataset" |> str_wrap(15),
+                 prop_range = .2,
+                 label_direction = 120
+                 )
+#> Warning in geom_labellink(which_index = 2, label = str_wrap("This is an
+#> observation in Anscombe's first dataset", : Ignoring unknown parameters:
+#> `label`
+```
+
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+
+gapminder::gapminder |>
+  filter(year == 2002) |>
+  ggplot() + 
+  aes(gdpPercap, lifeExp, id = country) + 
+  geom_point() + 
+  facet_wrap(~continent) + 
+  geom_labellink(which_id = "Chile",
+                 label_direction = -45,
+                 prop_range = .5)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+
+``` r
+
+
+mpg |>
+  ggplot() + 
+  aes(cty, hwy) + 
+  geom_point(aes(color = fl), alpha = .7) + 
+  geom_labellink(which_index = 50,
+                 label = "A point represents a single make and model in the mpg dataset: 'Fuel economy data from 1999 to 2008 for 38 popular models of cars'" |> str_wrap(15),
+                 label_direction = 110,
+                 prop_range = .2) + 
+    geom_labellink(which_id = "c",
+                   aes(id = fl),
+                 label_direction = 120,
+                 label = "fuel type is c") + 
+    geom_labellink(which_id = c("d","e") ,
+                   aes(id = fl),
+                 label_direction = -45) 
+#> Warning in geom_labellink(which_index = 50, label = str_wrap("A point
+#> represents a single make and model in the mpg dataset: 'Fuel economy data from
+#> 1999 to 2008 for 38 popular models of cars'", : Ignoring unknown parameters:
+#> `label`
+#> Warning in geom_labellink(which_id = "c", aes(id = fl), label_direction = 120,
+#> : Ignoring unknown parameters: `label`
+#> Warning in geom_labellink(which_id = "c", aes(id = fl), label_direction = 120, : Ignoring unknown aesthetics: id
+#> Ignoring unknown aesthetics: id
+#> Warning in geom_labellink(which_id = c("d", "e"), aes(id = fl), label_direction = -45): Ignoring unknown aesthetics: id
+#> Ignoring unknown aesthetics: id
+```
+
+![](README_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+
+``` r
+
 mtcars |>
   rownames_to_column() |>
-  mutate(rowname = factor(rowname)) |>
+  mutate(make = factor(rowname)) |>
   head() |>
   ggplot2::remove_missing() |>
   ggplot() + 
-  aes(x = wt, y = mpg, id = rowname) |>
+  aes(x = wt, y = mpg, id = make) |>
   geom_point() + 
   geom_labellink(which_id = "Mazda RX4",
                  label_direction = 45,
                  label = "hello")
-#> Warning in geom_point(aes(x = wt, y = mpg, id = rowname)): Ignoring unknown
+#> Warning in geom_point(aes(x = wt, y = mpg, id = make)): Ignoring unknown
 #> aesthetics: id
 #> Warning in geom_labellink(which_id = "Mazda RX4", label_direction = 45, :
 #> Ignoring unknown parameters: `label`
@@ -343,9 +487,61 @@ mtcars |>
 #> ! object 'y' not found
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
+
+mtcars |>
+  rownames_to_column() |>
+  mutate(make = factor(rowname)) |>
+  head() |>
+  ggplot2::remove_missing() |>
+  ggplot() + 
+  aes(x = wt, y = mpg, id = make) |>
+  geom_point() + 
+  geom_labellink(which_index = 1)
+#> Warning in geom_point(aes(x = wt, y = mpg, id = make)): Ignoring unknown
+#> aesthetics: id
+#> Warning in mean.default(data$x): argument is not numeric or logical: returning
+#> NA
+#> Warning in mean.default(data$y): argument is not numeric or logical: returning
+#> NA
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning: Computation failed in `labellink()`.
+#> Caused by error in `dplyr::mutate()`:
+#> ℹ In argument: `y = y + ypush`.
+#> Caused by error:
+#> ! object 'y' not found
+#> Warning in mean.default(data$x): argument is not numeric or logical: returning
+#> NA
+#> Warning in mean.default(data$y): argument is not numeric or logical: returning
+#> NA
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning: Computation failed in `labellink()`.
+#> Caused by error in `dplyr::mutate()`:
+#> ℹ In argument: `y = y + ypush`.
+#> Caused by error:
+#> ! object 'y' not found
+```
+
+![](README_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+
+``` r
+
 
 mtcars |>
   rownames_to_column() |>
@@ -431,7 +627,7 @@ nhl_player_births |>
 #> ! object 'y' not found
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 StatSum$compute_panel
@@ -474,7 +670,7 @@ nhl_player_births |>
 #> generated.
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 # Part II. Packaging and documentation 🚧 ✅
 
@@ -526,7 +722,7 @@ gapminder::gapminder |>
 #> -65, : Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 
@@ -534,7 +730,7 @@ last_plot() +
   scale_x_log10()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
 
 ## Phase 3: Settling and testing 🚧 ✅
 
@@ -630,13 +826,20 @@ fs::dir_tree(recurse = T)
 #> │       ├── unnamed-chunk-10-2.png
 #> │       ├── unnamed-chunk-11-1.png
 #> │       ├── unnamed-chunk-11-2.png
+#> │       ├── unnamed-chunk-13-1.png
+#> │       ├── unnamed-chunk-13-2.png
 #> │       ├── unnamed-chunk-5-1.png
 #> │       ├── unnamed-chunk-5-2.png
 #> │       ├── unnamed-chunk-7-1.png
 #> │       ├── unnamed-chunk-7-2.png
 #> │       ├── unnamed-chunk-7-3.png
+#> │       ├── unnamed-chunk-7-4.png
+#> │       ├── unnamed-chunk-7-5.png
+#> │       ├── unnamed-chunk-7-6.png
+#> │       ├── unnamed-chunk-7-7.png
 #> │       ├── unnamed-chunk-8-1.png
 #> │       ├── unnamed-chunk-8-2.png
+#> │       ├── unnamed-chunk-8-3.png
 #> │       ├── unnamed-chunk-9-1.png
 #> │       └── unnamed-chunk-9-2.png
 #> ├── ggcallout.Rproj
