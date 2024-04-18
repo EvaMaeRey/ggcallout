@@ -1,4 +1,4 @@
-compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_range = .1, prop_pointer_pad = .175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
+compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_range = .1, prop_pointer_pad = .0175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
   
   if(is.null(data$id)){data$id <- "hello world"}
   if(is.null(which_index)){which_index <- which(data$id == which_id)}
@@ -15,6 +15,9 @@ compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_ran
   xpush <- range_x * prop_range * xdir
   ypush <- range_y * prop_range * ydir
   
+  xpointer_pad <- range_x *xdir* prop_pointer_pad
+  ypointer_pad <- range_y *ydir* prop_pointer_pad
+  
   more_x_than_y <- abs(xdir) > abs(ydir)
   
   if(is.null(hjust)){hjust <- ifelse(more_x_than_y, sign(xdir) != 1, .5)}
@@ -23,8 +26,8 @@ compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_ran
   data |> 
     dplyr::mutate(x = x + xpush) |>
     dplyr::mutate(y = y + ypush) |>
-    dplyr::mutate(xend = .data$x - xpush*(1-prop_pointer_pad)) |>
-    dplyr::mutate(yend = .data$y - ypush*(1-prop_pointer_pad)) |>
+    dplyr::mutate(xend = .data$x - (xpush - xpointer_pad)) |>
+    dplyr::mutate(yend = .data$y - (ypush - ypointer_pad)) |>
     dplyr::mutate(hjust = hjust) |>
     dplyr::mutate(vjust = vjust) |> 
     dplyr::slice(which_index)
