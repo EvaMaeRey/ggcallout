@@ -114,6 +114,10 @@ StatLabellink <- ggplot2::ggproto("Labellink",
                          compute_panel = compute_labellink,
                          default_aes = 
                            ggplot2::aes(label = ggplot2::after_stat(default_label)))
+
+
+
+
 ```
 
 
@@ -169,7 +173,7 @@ ggplot(cars) +
         position = "identity",  
         # data = cars[23,],
         params = list(which_index = 23, 
-                      label = "let me tell you about this point" |> str_wrap(15),
+                      label = "let me tell you about this guy" |> str_wrap(15),
                       alpha = 0,
                       lineheight = .8,
                       label.size = 0,
@@ -235,6 +239,85 @@ geom_labellink <- function(  mapping = NULL,
 
 ```
 
+```{r}
+gapminder::gapminder |> 
+  filter(year == 2002) |>
+  ggplot() + 
+  aes(x = gdpPercap, y = lifeExp, id = country) + 
+  geom_point(color = "darkgrey") + 
+  geom_labellink(which_id = "Chile",
+                             label_direction = 45) + 
+  geom_labellink(which_id = "Brazil",
+                             label_direction = -65,
+                             label = "Brazil is a pretty\n interesting case")
+
+last_plot() + 
+  scale_x_log10()
+
+mtcars |>
+  rownames_to_column() |>
+  mutate(rowname = factor(rowname)) |>
+  head() |>
+  ggplot2::remove_missing() |>
+  ggplot() + 
+  aes(x = wt, y = mpg, id = rowname) |>
+  geom_point() + 
+  geom_labellink(which_id = "Mazda RX4",
+                 label_direction = 45,
+                 label = "hello")
+
+mtcars |>
+  rownames_to_column() |>
+  mutate(rowname = factor(rowname)) |>
+  select(x = wt, y = mpg, id = rowname) |>
+  compute_labellink(which_id = "Mazda RX4")
+
+
+gapminder::gapminder |> 
+  filter(year == 2002) |>
+  select(x = gdpPercap, y = lifeExp, id = country) |>
+  compute_labellink(which_id = "Chile")
+```
+
+```{r}
+nhl_player_births <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2024/2024-01-09/nhl_player_births.csv')
+
+
+set.seed(1245)
+nhl_player_births |> 
+  sample_frac(.1) |>
+  ggplot2::remove_missing() |>
+  mutate(birth_date_2020 = birth_date %>% str_replace("....", "2000") %>% as_date()) |>
+  mutate(first_last = paste(first_name, last_name)) |>
+  ggplot() + 
+  aes(x = birth_month, 
+      y = birth_year,
+      id = first_last) |>
+  geom_point() + 
+  geom_labellink(which_id = "Donald Brashear")
+```  
+
+
+
+```{r}
+StatSum$compute_panel
+  
+
+nhl_player_births |> 
+  mutate(birth_date2020 = str_replace(birth_date, "....", "2020") %>% as.Date()) |>
+  filter(birth_year >= 1970, birth_year <= 2000) |>
+  ggplot() + 
+  aes(x = month(birth_date, label = T), 
+      y = year(birth_date),
+      size = NULL) + 
+  layer(stat = StatSum, geom = GeomTile, position = "identity") + 
+  aes(fill = after_stat(n)) +
+  aes(label = after_stat(n)) +
+  layer(stat = StatSum, geom = GeomText, position = "identity",
+        params = list(color = "gray")) + 
+  scale_fill_viridis_c()
+
+```
 
 # Part II. Packaging and documentation  🚧 ✅ 
 

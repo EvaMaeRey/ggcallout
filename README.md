@@ -200,7 +200,7 @@ ggplot(cars) +
         position = "identity",  
         # data = cars[23,],
         params = list(which_index = 23, 
-                      label = "let me tell you about this point" |> str_wrap(15),
+                      label = "let me tell you about this guy" |> str_wrap(15),
                       alpha = 0,
                       lineheight = .8,
                       label.size = 0,
@@ -265,6 +265,217 @@ geom_labellink <- function(  mapping = NULL,
 }
 ```
 
+``` r
+gapminder::gapminder |> 
+  filter(year == 2002) |>
+  ggplot() + 
+  aes(x = gdpPercap, y = lifeExp, id = country) + 
+  geom_point(color = "darkgrey") + 
+  geom_labellink(which_id = "Chile",
+                             label_direction = 45) + 
+  geom_labellink(which_id = "Brazil",
+                             label_direction = -65,
+                             label = "Brazil is a pretty\n interesting case")
+#> Warning in geom_labellink(which_id = "Brazil", label_direction = -65, label =
+#> "Brazil is a pretty\n interesting case"): Ignoring unknown parameters: `label`
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+
+last_plot() + 
+  scale_x_log10()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+
+``` r
+
+mtcars |>
+  rownames_to_column() |>
+  mutate(rowname = factor(rowname)) |>
+  head() |>
+  ggplot2::remove_missing() |>
+  ggplot() + 
+  aes(x = wt, y = mpg, id = rowname) |>
+  geom_point() + 
+  geom_labellink(which_id = "Mazda RX4",
+                 label_direction = 45,
+                 label = "hello")
+#> Warning in geom_point(aes(x = wt, y = mpg, id = rowname)): Ignoring unknown
+#> aesthetics: id
+#> Warning in geom_labellink(which_id = "Mazda RX4", label_direction = 45, :
+#> Ignoring unknown parameters: `label`
+#> Warning in mean.default(data$x): argument is not numeric or logical: returning
+#> NA
+#> Warning in mean.default(data$y): argument is not numeric or logical: returning
+#> NA
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning: Computation failed in `labellink()`.
+#> Caused by error in `dplyr::mutate()`:
+#> ℹ In argument: `y = y + ypush`.
+#> Caused by error:
+#> ! object 'y' not found
+#> Warning in mean.default(data$x): argument is not numeric or logical: returning
+#> NA
+#> Warning in mean.default(data$y): argument is not numeric or logical: returning
+#> NA
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning: Computation failed in `labellink()`.
+#> Caused by error in `dplyr::mutate()`:
+#> ℹ In argument: `y = y + ypush`.
+#> Caused by error:
+#> ! object 'y' not found
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+
+``` r
+
+mtcars |>
+  rownames_to_column() |>
+  mutate(rowname = factor(rowname)) |>
+  select(x = wt, y = mpg, id = rowname) |>
+  compute_labellink(which_id = "Mazda RX4")
+#>          x       y        id default_label     xend    yend hjust vjust
+#> 1 2.343451 19.3383 Mazda RX4     Mazda RX4 2.571604 20.7092  TRUE   0.5
+
+
+gapminder::gapminder |> 
+  filter(year == 2002) |>
+  select(x = gdpPercap, y = lifeExp, id = country) |>
+  compute_labellink(which_id = "Chile")
+#> # A tibble: 1 × 8
+#>       x     y id    default_label   xend  yend hjust vjust
+#>   <dbl> <dbl> <fct> <fct>          <dbl> <dbl> <lgl> <dbl>
+#> 1 7636.  74.8 Chile Chile         10229.  77.3 TRUE    0.5
+```
+
+``` r
+nhl_player_births <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2024/2024-01-09/nhl_player_births.csv')
+#> Rows: 8474 Columns: 9
+#> ── Column specification ────────────────────────────────────────────────────────
+#> Delimiter: ","
+#> chr  (5): first_name, last_name, birth_city, birth_country, birth_state_prov...
+#> dbl  (3): player_id, birth_year, birth_month
+#> date (1): birth_date
+#> 
+#> ℹ Use `spec()` to retrieve the full column specification for this data.
+#> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+
+set.seed(1245)
+nhl_player_births |> 
+  sample_frac(.1) |>
+  ggplot2::remove_missing() |>
+  mutate(birth_date_2020 = birth_date %>% str_replace("....", "2000") %>% as_date()) |>
+  mutate(first_last = paste(first_name, last_name)) |>
+  ggplot() + 
+  aes(x = birth_month, 
+      y = birth_year,
+      id = first_last) |>
+  geom_point() + 
+  geom_labellink(which_id = "Donald Brashear")
+#> Warning: Removed 166 rows containing missing values or values outside the scale
+#> range.
+#> Warning in geom_point(aes(x = birth_month, y = birth_year, id = first_last)):
+#> Ignoring unknown aesthetics: id
+#> Warning in mean.default(data$x): argument is not numeric or logical: returning
+#> NA
+#> Warning in mean.default(data$y): argument is not numeric or logical: returning
+#> NA
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning: Computation failed in `labellink()`.
+#> Caused by error in `dplyr::mutate()`:
+#> ℹ In argument: `y = y + ypush`.
+#> Caused by error:
+#> ! object 'y' not found
+#> Warning in mean.default(data$x): argument is not numeric or logical: returning
+#> NA
+#> Warning in mean.default(data$y): argument is not numeric or logical: returning
+#> NA
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
+#> Inf
+#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
+#> -Inf
+#> Warning: Computation failed in `labellink()`.
+#> Caused by error in `dplyr::mutate()`:
+#> ℹ In argument: `y = y + ypush`.
+#> Caused by error:
+#> ! object 'y' not found
+```
+
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+StatSum$compute_panel
+#> <ggproto method>
+#>   <Wrapper function>
+#>     function (...) 
+#> compute_panel(...)
+#> 
+#>   <Inner function (f)>
+#>     function (data, scales) 
+#> {
+#>     if (is.null(data$weight)) 
+#>         data$weight <- 1
+#>     group_by <- setdiff(intersect(names(data), ggplot_global$all_aesthetics), 
+#>         "weight")
+#>     counts <- count(data, group_by, wt_var = "weight")
+#>     counts <- rename(counts, c(freq = "n"))
+#>     counts$prop <- stats::ave(counts$n, counts$group, FUN = prop.table)
+#>     counts
+#> }
+  
+
+nhl_player_births |> 
+  mutate(birth_date2020 = str_replace(birth_date, "....", "2020") %>% as.Date()) |>
+  filter(birth_year >= 1970, birth_year <= 2000) |>
+  ggplot() + 
+  aes(x = month(birth_date, label = T), 
+      y = year(birth_date),
+      size = NULL) + 
+  layer(stat = StatSum, geom = GeomTile, position = "identity") + 
+  aes(fill = after_stat(n)) +
+  aes(label = after_stat(n)) +
+  layer(stat = StatSum, geom = GeomText, position = "identity",
+        params = list(color = "gray")) + 
+  scale_fill_viridis_c()
+#> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+#> ℹ Please use `linewidth` instead.
+#> This warning is displayed once every 8 hours.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
+```
+
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
 # Part II. Packaging and documentation 🚧 ✅
 
 ## Phase 1. Minimal working package
@@ -315,7 +526,7 @@ gapminder::gapminder |>
 #> -65, : Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 
@@ -323,7 +534,7 @@ last_plot() +
   scale_x_log10()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
 
 ## Phase 3: Settling and testing 🚧 ✅
 
@@ -415,10 +626,19 @@ fs::dir_tree(recurse = T)
 #> ├── README.md
 #> ├── README_files
 #> │   └── figure-gfm
+#> │       ├── unnamed-chunk-10-1.png
+#> │       ├── unnamed-chunk-10-2.png
+#> │       ├── unnamed-chunk-11-1.png
+#> │       ├── unnamed-chunk-11-2.png
 #> │       ├── unnamed-chunk-5-1.png
 #> │       ├── unnamed-chunk-5-2.png
+#> │       ├── unnamed-chunk-7-1.png
+#> │       ├── unnamed-chunk-7-2.png
+#> │       ├── unnamed-chunk-7-3.png
 #> │       ├── unnamed-chunk-8-1.png
-#> │       └── unnamed-chunk-8-2.png
+#> │       ├── unnamed-chunk-8-2.png
+#> │       ├── unnamed-chunk-9-1.png
+#> │       └── unnamed-chunk-9-2.png
 #> ├── ggcallout.Rproj
 #> ├── man
 #> └── readme2pkg.template.Rproj

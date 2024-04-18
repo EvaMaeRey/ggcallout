@@ -39,3 +39,7 @@ StatLabellink <- ggplot2::ggproto("Labellink",
                          compute_panel = compute_labellink,
                          default_aes = 
                            ggplot2::aes(label = ggplot2::after_stat(default_label)))
+
+
+
+
