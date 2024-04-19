@@ -114,10 +114,42 @@ StatLabellink <- ggplot2::ggproto("Labellink",
                          compute_panel = compute_labellink,
                          default_aes = 
                            ggplot2::aes(label = ggplot2::after_stat(default_label)))
+```
+
+
+```{r}
+compute_index <- function(data, scales){
+  
+  data |>
+    mutate(index = row_number())
+  
+}
+
+
+StatIndex <- ggplot2::ggproto("StatIndex",
+                         ggplot2::Stat,
+                         compute_panel = compute_index,
+                         default_aes = 
+                           ggplot2::aes(label = ggplot2::after_stat(index)))
+
+geom_index <- function(){
+  
+  layer("label", "index", position = "identity",
+          params = list(label.size = NA, fill = NA, hjust = 0,
+                        vjust = 0))
+  
+}
+```
 
 
 
-
+```{r, eval = F}
+library(tidyverse)
+ggplot(cars, aes(speed, dist)) + 
+  geom_point() +
+    layer("label", "index", position = "identity",
+          params = list(label.size = NA, fill = NA, hjust = 0,
+                        vjust = 0))
 ```
 
 
@@ -269,8 +301,9 @@ chickwts |>
   ggplot() + 
   aes(weight, feed, id = weight) + 
   geom_point() + 
-  geom_labellink(which_id = 179,
-                 label_direction = -45)
+  geom_labellink(which_index = 4,
+                 label_direction = -10,
+                 label = "The chicks fed horsebeans had a lower than average weight" |> str_wrap(20))
 
 pressure |>
   ggplot() + 
@@ -298,7 +331,19 @@ airquality |>
                  label_direction = 100,
                  hjust = .5,
                  prop_range = .2,
-                 label = "Here is a low temperature observation within the distribution" |> str_wrap(20))
+                 label = "Here's a relatively a low temperature observation" |> str_wrap(20))
+
+
+datasets::anscombe |>
+  ggplot() + 
+  aes(x = x4, y = y4) + 
+  geom_point() + 
+  # geom_index() +
+  geom_labellink(which_index = 8,
+                 label = "This is the high-leverage observation in Anscombe's #4" |>
+                   str_wrap(18),
+                 label_direction = -170,
+                 prop_range = .25) 
 
 
 ```
@@ -338,8 +383,8 @@ mpg |>
                  label_direction = 120,
                  label = "fuel type is c") + 
     geom_labellink(which_id = c("d","e") ,
-                   aes(id = fl),
-                 label_direction = -45) 
+                  aes(id = fl),
+                  label_direction = -45) 
 
 
 ```
@@ -348,28 +393,32 @@ mpg |>
 
 
 ```{r}
-
 mtcars |>
   rownames_to_column() |>
   mutate(make = factor(rowname)) |>
-  head() |>
-  ggplot2::remove_missing() |>
   ggplot() + 
-  aes(x = wt, y = mpg, id = make) |>
+  aes(x = wt, y = mpg, id = make) +
   geom_point() + 
+  geom_index()
   geom_labellink(which_id = "Mazda RX4",
-                 label_direction = 45,
-                 label = "hello")
+                 label_direction = 85,
+                 prop_range = .2)
 
 mtcars |>
   rownames_to_column() |>
   mutate(make = factor(rowname)) |>
-  head() |>
   ggplot2::remove_missing() |>
   ggplot() + 
-  aes(x = wt, y = mpg, id = make) |>
+  aes(x = wt, y = mpg, id = make ) +
   geom_point() + 
-  geom_labellink(which_index = 1)
+  # geom_index() 
+  geom_labellink(which_index = 18,
+                 label = "The Fiat 128 has great milage compared to other makes in the mtcars dataset" |> str_wrap(25),
+                 label_direction = -30) + 
+  geom_labellink(which_index = 15,
+                 label = "The Cadillac Fleetwood had pretty terrible milage" |> str_wrap(12),
+                 label_direction = 130,
+                 prop_range = .2)
 
 
 mtcars |>
@@ -391,16 +440,20 @@ nhl_player_births <- readr::read_csv('https://raw.githubusercontent.com/rfordata
 
 set.seed(1245)
 nhl_player_births |> 
-  sample_frac(.1) |>
-  ggplot2::remove_missing() |>
   mutate(birth_date_2020 = birth_date %>% str_replace("....", "2000") %>% as_date()) |>
   mutate(first_last = paste(first_name, last_name)) |>
+  arrange(birth_date) |>
   ggplot() + 
-  aes(x = birth_month, 
-      y = birth_year,
-      id = first_last) |>
-  geom_point() + 
-  geom_labellink(which_id = "Donald Brashear")
+  aes(x = birth_date_2020, 
+      y = birth_year) +
+  geom_point(color = "lightgrey") + 
+  # geom_index() +
+  geom_labellink(which_index = 1,
+                 label = "Jack Lviolette has the earliest birthday in the dataset: July 27, 1879" |> str_wrap(30),
+                 label_direction = 60,
+                 prop_range = .3)
+
+
 ```  
 
 

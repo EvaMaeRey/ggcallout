@@ -122,6 +122,39 @@ StatLabellink <- ggplot2::ggproto("Labellink",
                            ggplot2::aes(label = ggplot2::after_stat(default_label)))
 ```
 
+``` r
+compute_index <- function(data, scales){
+  
+  data |>
+    mutate(index = row_number())
+  
+}
+
+
+StatIndex <- ggplot2::ggproto("StatIndex",
+                         ggplot2::Stat,
+                         compute_panel = compute_index,
+                         default_aes = 
+                           ggplot2::aes(label = ggplot2::after_stat(index)))
+
+geom_index <- function(){
+  
+  layer("label", "index", position = "identity",
+          params = list(label.size = NA, fill = NA, hjust = 0,
+                        vjust = 0))
+  
+}
+```
+
+``` r
+library(tidyverse)
+ggplot(cars, aes(speed, dist)) + 
+  geom_point() +
+    layer("label", "index", position = "identity",
+          params = list(label.size = NA, fill = NA, hjust = 0,
+                        vjust = 0))
+```
+
 ## Try out compute function
 
 ``` r
@@ -180,7 +213,7 @@ gapminder::gapminder |>
   scale_x_log10()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
 
@@ -213,7 +246,7 @@ ggplot(cars) +
                       color = "red"))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
 
 # Pass stat to user-facing function
 
@@ -280,7 +313,7 @@ gapminder::gapminder |>
 #> "Brazil is a pretty\n interesting case"): Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 
@@ -288,7 +321,7 @@ last_plot() +
   scale_x_log10()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
 
 ``` r
 
@@ -298,7 +331,7 @@ last_plot() %+%
     filter(gdpPercap > 3000))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
 
 ``` r
 
@@ -309,7 +342,7 @@ chickwts |>
   geom_labellink(which_index = 2)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-4.png)<!-- -->
 
 ``` r
 
@@ -317,11 +350,15 @@ chickwts |>
   ggplot() + 
   aes(weight, feed, id = weight) + 
   geom_point() + 
-  geom_labellink(which_id = 179,
-                 label_direction = -45)
+  geom_labellink(which_index = 4,
+                 label_direction = -10,
+                 label = "The chicks fed horsebeans had a lower than average weight" |> str_wrap(20))
+#> Warning in geom_labellink(which_index = 4, label_direction = -10, label =
+#> str_wrap("The chicks fed horsebeans had a lower than average weight", :
+#> Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-5.png)<!-- -->
 
 ``` r
 
@@ -347,7 +384,7 @@ pressure |>
 #> parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-6.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-6.png)<!-- -->
 
 ``` r
 
@@ -361,14 +398,34 @@ airquality |>
                  label_direction = 100,
                  hjust = .5,
                  prop_range = .2,
-                 label = "Here is a low temperature observation within the distribution" |> str_wrap(20))
+                 label = "Here's a relatively a low temperature observation" |> str_wrap(20))
 #> Warning: Removed 42 rows containing missing values or values outside the scale
 #> range.
 #> Warning in geom_labellink(which_index = 5, label_direction = 100, hjust = 0.5,
 #> : Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-7.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-7.png)<!-- -->
+
+``` r
+
+
+datasets::anscombe |>
+  ggplot() + 
+  aes(x = x4, y = y4) + 
+  geom_point() + 
+  # geom_index() +
+  geom_labellink(which_index = 8,
+                 label = "This is the high-leverage observation in Anscombe's #4" |>
+                   str_wrap(18),
+                 label_direction = -170,
+                 prop_range = .25) 
+#> Warning in geom_labellink(which_index = 8, label = str_wrap("This is the
+#> high-leverage observation in Anscombe's #4", : Ignoring unknown parameters:
+#> `label`
+```
+
+![](README_files/figure-gfm/unnamed-chunk-9-8.png)<!-- -->
 
 ``` r
 anscombe |>
@@ -385,7 +442,7 @@ anscombe |>
 #> `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 
@@ -400,7 +457,7 @@ gapminder::gapminder |>
                  prop_range = .5)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 
@@ -418,8 +475,8 @@ mpg |>
                  label_direction = 120,
                  label = "fuel type is c") + 
     geom_labellink(which_id = c("d","e") ,
-                   aes(id = fl),
-                 label_direction = -45) 
+                  aes(id = fl),
+                  label_direction = -45) 
 #> Warning in geom_labellink(which_index = 50, label = str_wrap("A point
 #> represents a single make and model in the mpg dataset: 'Fuel economy data from
 #> 1999 to 2008 for 38 popular models of cars'", : Ignoring unknown parameters:
@@ -432,113 +489,57 @@ mpg |>
 #> Ignoring unknown aesthetics: id
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
 ``` r
-
 mtcars |>
   rownames_to_column() |>
   mutate(make = factor(rowname)) |>
-  head() |>
-  ggplot2::remove_missing() |>
   ggplot() + 
-  aes(x = wt, y = mpg, id = make) |>
+  aes(x = wt, y = mpg, id = make) +
   geom_point() + 
+  geom_index()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
   geom_labellink(which_id = "Mazda RX4",
-                 label_direction = 45,
-                 label = "hello")
-#> Warning in geom_point(aes(x = wt, y = mpg, id = make)): Ignoring unknown
-#> aesthetics: id
-#> Warning in geom_labellink(which_id = "Mazda RX4", label_direction = 45, :
-#> Ignoring unknown parameters: `label`
-#> Warning in mean.default(data$x): argument is not numeric or logical: returning
-#> NA
-#> Warning in mean.default(data$y): argument is not numeric or logical: returning
-#> NA
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning: Computation failed in `labellink()`.
-#> Caused by error in `dplyr::mutate()`:
-#> ℹ In argument: `y = y + ypush`.
-#> Caused by error:
-#> ! object 'y' not found
-#> Warning in mean.default(data$x): argument is not numeric or logical: returning
-#> NA
-#> Warning in mean.default(data$y): argument is not numeric or logical: returning
-#> NA
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning: Computation failed in `labellink()`.
-#> Caused by error in `dplyr::mutate()`:
-#> ℹ In argument: `y = y + ypush`.
-#> Caused by error:
-#> ! object 'y' not found
-```
-
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
-
-``` r
+                 label_direction = 85,
+                 prop_range = .2)
+#> [[1]]
+#> geom_segment: arrow = list(angle = 30, length = 0.1, ends = 2, type = 2), na.rm = FALSE
+#> labellink: na.rm = FALSE, which_id = Mazda RX4, label_direction = 85, prop_range = 0.2
+#> position_identity 
+#> 
+#> [[2]]
+#> geom_label: label.size = 0, label.padding = 0.4, na.rm = FALSE
+#> labellink: na.rm = FALSE, which_id = Mazda RX4, label_direction = 85, prop_range = 0.2
+#> position_identity
 
 mtcars |>
   rownames_to_column() |>
   mutate(make = factor(rowname)) |>
-  head() |>
   ggplot2::remove_missing() |>
   ggplot() + 
-  aes(x = wt, y = mpg, id = make) |>
+  aes(x = wt, y = mpg, id = make ) +
   geom_point() + 
-  geom_labellink(which_index = 1)
-#> Warning in geom_point(aes(x = wt, y = mpg, id = make)): Ignoring unknown
-#> aesthetics: id
-#> Warning in mean.default(data$x): argument is not numeric or logical: returning
-#> NA
-#> Warning in mean.default(data$y): argument is not numeric or logical: returning
-#> NA
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning: Computation failed in `labellink()`.
-#> Caused by error in `dplyr::mutate()`:
-#> ℹ In argument: `y = y + ypush`.
-#> Caused by error:
-#> ! object 'y' not found
-#> Warning in mean.default(data$x): argument is not numeric or logical: returning
-#> NA
-#> Warning in mean.default(data$y): argument is not numeric or logical: returning
-#> NA
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning: Computation failed in `labellink()`.
-#> Caused by error in `dplyr::mutate()`:
-#> ℹ In argument: `y = y + ypush`.
-#> Caused by error:
-#> ! object 'y' not found
+  # geom_index() 
+  geom_labellink(which_index = 18,
+                 label = "The Fiat 128 has great milage compared to other makes in the mtcars dataset" |> str_wrap(25),
+                 label_direction = -30) + 
+  geom_labellink(which_index = 15,
+                 label = "The Cadillac Fleetwood had pretty terrible milage" |> str_wrap(12),
+                 label_direction = 130,
+                 prop_range = .2)
+#> Warning in geom_labellink(which_index = 18, label = str_wrap("The Fiat 128 has
+#> great milage compared to other makes in the mtcars dataset", : Ignoring unknown
+#> parameters: `label`
+#> Warning in geom_labellink(which_index = 15, label = str_wrap("The Cadillac
+#> Fleetwood had pretty terrible milage", : Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
 
@@ -577,57 +578,24 @@ nhl_player_births <- readr::read_csv('https://raw.githubusercontent.com/rfordata
 
 set.seed(1245)
 nhl_player_births |> 
-  sample_frac(.1) |>
-  ggplot2::remove_missing() |>
   mutate(birth_date_2020 = birth_date %>% str_replace("....", "2000") %>% as_date()) |>
   mutate(first_last = paste(first_name, last_name)) |>
+  arrange(birth_date) |>
   ggplot() + 
-  aes(x = birth_month, 
-      y = birth_year,
-      id = first_last) |>
-  geom_point() + 
-  geom_labellink(which_id = "Donald Brashear")
-#> Warning: Removed 166 rows containing missing values or values outside the scale
-#> range.
-#> Warning in geom_point(aes(x = birth_month, y = birth_year, id = first_last)):
-#> Ignoring unknown aesthetics: id
-#> Warning in mean.default(data$x): argument is not numeric or logical: returning
-#> NA
-#> Warning in mean.default(data$y): argument is not numeric or logical: returning
-#> NA
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning: Computation failed in `labellink()`.
-#> Caused by error in `dplyr::mutate()`:
-#> ℹ In argument: `y = y + ypush`.
-#> Caused by error:
-#> ! object 'y' not found
-#> Warning in mean.default(data$x): argument is not numeric or logical: returning
-#> NA
-#> Warning in mean.default(data$y): argument is not numeric or logical: returning
-#> NA
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning in min(x, na.rm = na.rm): no non-missing arguments to min; returning
-#> Inf
-#> Warning in max(x, na.rm = na.rm): no non-missing arguments to max; returning
-#> -Inf
-#> Warning: Computation failed in `labellink()`.
-#> Caused by error in `dplyr::mutate()`:
-#> ℹ In argument: `y = y + ypush`.
-#> Caused by error:
-#> ! object 'y' not found
+  aes(x = birth_date_2020, 
+      y = birth_year) +
+  geom_point(color = "lightgrey") + 
+  # geom_index() +
+  geom_labellink(which_index = 1,
+                 label = "Jack Lviolette has the earliest birthday in the dataset: July 27, 1879" |> str_wrap(30),
+                 label_direction = 60,
+                 prop_range = .3)
+#> Warning in geom_labellink(which_index = 1, label = str_wrap("Jack Lviolette has
+#> the earliest birthday in the dataset: July 27, 1879", : Ignoring unknown
+#> parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 StatSum$compute_panel
@@ -670,7 +638,7 @@ nhl_player_births |>
 #> generated.
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 # Part II. Packaging and documentation 🚧 ✅
 
@@ -722,7 +690,7 @@ gapminder::gapminder |>
 #> -65, : Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 
@@ -730,7 +698,7 @@ last_plot() +
   scale_x_log10()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
 
 ## Phase 3: Settling and testing 🚧 ✅
 
@@ -824,10 +792,14 @@ fs::dir_tree(recurse = T)
 #> │   └── figure-gfm
 #> │       ├── unnamed-chunk-10-1.png
 #> │       ├── unnamed-chunk-10-2.png
+#> │       ├── unnamed-chunk-10-3.png
 #> │       ├── unnamed-chunk-11-1.png
 #> │       ├── unnamed-chunk-11-2.png
+#> │       ├── unnamed-chunk-12-1.png
 #> │       ├── unnamed-chunk-13-1.png
 #> │       ├── unnamed-chunk-13-2.png
+#> │       ├── unnamed-chunk-15-1.png
+#> │       ├── unnamed-chunk-15-2.png
 #> │       ├── unnamed-chunk-5-1.png
 #> │       ├── unnamed-chunk-5-2.png
 #> │       ├── unnamed-chunk-7-1.png
@@ -841,7 +813,13 @@ fs::dir_tree(recurse = T)
 #> │       ├── unnamed-chunk-8-2.png
 #> │       ├── unnamed-chunk-8-3.png
 #> │       ├── unnamed-chunk-9-1.png
-#> │       └── unnamed-chunk-9-2.png
+#> │       ├── unnamed-chunk-9-2.png
+#> │       ├── unnamed-chunk-9-3.png
+#> │       ├── unnamed-chunk-9-4.png
+#> │       ├── unnamed-chunk-9-5.png
+#> │       ├── unnamed-chunk-9-6.png
+#> │       ├── unnamed-chunk-9-7.png
+#> │       └── unnamed-chunk-9-8.png
 #> ├── ggcallout.Rproj
 #> ├── man
 #> └── readme2pkg.template.Rproj
