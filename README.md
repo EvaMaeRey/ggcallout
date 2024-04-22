@@ -140,8 +140,8 @@ StatIndex <- ggplot2::ggproto("StatIndex",
 geom_index <- function(){
   
   layer("label", "index", position = "identity",
-          params = list(label.size = NA, fill = NA, hjust = 0,
-                        vjust = 0))
+          params = list(label.size = NA, fill = NA, hjust = "inward",
+                        vjust = "inward"))
   
 }
 ```
@@ -578,24 +578,158 @@ nhl_player_births <- readr::read_csv('https://raw.githubusercontent.com/rfordata
 
 set.seed(1245)
 nhl_player_births |> 
-  mutate(birth_date_2020 = birth_date %>% str_replace("....", "2000") %>% as_date()) |>
+  mutate(birth_date_2020 = birth_date %>% str_replace("....", "2000") %>% 
+           as_date()) |>
   mutate(first_last = paste(first_name, last_name)) |>
-  arrange(birth_date) |>
+  arrange(birth_date) %>% 
   ggplot() + 
   aes(x = birth_date_2020, 
       y = birth_year) +
-  geom_point(color = "lightgrey") + 
+  geom_point(color = "cadetblue", alpha = .25) + 
   # geom_index() +
   geom_labellink(which_index = 1,
                  label = "Jack Lviolette has the earliest birthday in the dataset: July 27, 1879" |> str_wrap(30),
                  label_direction = 60,
-                 prop_range = .3)
+                 prop_range = .3,
+                 color = "grey10") +
+  geom_labellink(which_index = nrow(nhl_player_births),
+                 label = "Connor Bedard has the most recent birthday in the dataset: July 17, 2005" |> str_wrap(25),
+                 prop_range = .2,
+                 label_direction = -100,
+                 color = "grey10")
 #> Warning in geom_labellink(which_index = 1, label = str_wrap("Jack Lviolette has
 #> the earliest birthday in the dataset: July 27, 1879", : Ignoring unknown
 #> parameters: `label`
+#> Warning in geom_labellink(which_index = nrow(nhl_player_births), label =
+#> str_wrap("Connor Bedard has the most recent birthday in the dataset: July 17,
+#> 2005", : Ignoring unknown parameters: `label`
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+  
+  
+ggwipe::last_plot_wipe(index = 2) +  
+  ggpointdensity::geom_pointdensity(alpha = .5) + 
+  scale_color_viridis_c()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+
+``` r
+outer_space_objects <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2024/2024-04-23/outer_space_objects.csv')
+#> Rows: 1175 Columns: 4
+#> ── Column specification ────────────────────────────────────────────────────────
+#> Delimiter: ","
+#> chr (2): Entity, Code
+#> dbl (2): Year, num_objects
+#> 
+#> ℹ Use `spec()` to retrieve the full column specification for this data.
+#> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+outer_space_objects %>% 
+  count(Entity, wt = num_objects) %>% 
+  arrange(-n) %>% 
+  pull(Entity) %>% 
+  .[2:7] ->
+top_appearances  # more than 150
+```
+
+``` r
+russia1957lab <- "The first observation in the 'Outerspace objects dataset are two Russian objects in 1957"
+us2023lab <- "The highest recorded number of objects in a year for an entity was 2166 objects from the US in 2023"
+
+outer_space_objects |>
+  arrange(Year) %>% 
+  mutate(Entity_Year = paste(Entity, Year, sep = "-")) %>% 
+  filter(Entity != "World") |> #slice(1107)
+  mutate(entities = ifelse(Entity %in% top_appearances, 
+                           Entity, "other")) |>
+ggplot() + 
+  aes(Year, num_objects, id = Entity_Year) + 
+  geom_point(aes(color = entities)) + 
+  geom_line(aes(group = Entity), linewidth = .05) +
+  # geom_index() +
+  geom_labellink(which_id = "Russia-1957",
+                 label = russia1957lab |> str_wrap(20),
+                 label_direction = 170) +
+  geom_labellink(which_id = "United States-2023",
+                 label = us2023lab |> str_wrap(20),
+                 prop_range = .15,
+                 label_direction = -45) + 
+  geom_labellink(which_id = "China-2023",
+                 label = "China",
+                 label_direction = -15,
+                 prop_range = .1) + 
+  geom_labellink(which_id = "France-2023",
+                 label = "France",
+                 label_direction = -15,
+                 prop_range = .1) + 
+  geom_labellink(which_id = "Japan-2023",
+                 label = "Japan",
+                 label_direction = 5,
+                 prop_range = .1) +
+    geom_labellink(which_id = "United Kingdom-2023",
+                 label = "United\nKingdom",
+                 label_direction = 10,
+                 prop_range = .1) +
+  aes(alpha = entities != "other") + 
+  scale_y_log10() + 
+  labs(title = "The number of objects in Space by entity ") + 
+  annotate(alpha = 0, x  = c(1925, 2060), y = 1, geom = GeomPoint) + 
+  theme(panel.background = element_rect(fill = "snow")) + 
+  theme(plot.background = element_rect(fill = "snow")) + 
+  theme(axis.ticks = element_blank()) + 
+  labs(y = NULL, x = NULL) + 
+  theme() + 
+  # geom_index() + 
+  guides(color = "none") +
+  guides(alpha = "none") + 
+  NULL
+#> Warning in geom_labellink(which_id = "Russia-1957", label =
+#> str_wrap(russia1957lab, : Ignoring unknown parameters: `label`
+#> Warning in geom_labellink(which_id = "United States-2023", label =
+#> str_wrap(us2023lab, : Ignoring unknown parameters: `label`
+#> Warning in geom_labellink(which_id = "China-2023", label = "China",
+#> label_direction = -15, : Ignoring unknown parameters: `label`
+#> Warning in geom_labellink(which_id = "France-2023", label = "France",
+#> label_direction = -15, : Ignoring unknown parameters: `label`
+#> Warning in geom_labellink(which_id = "Japan-2023", label = "Japan",
+#> label_direction = 5, : Ignoring unknown parameters: `label`
+#> Warning in geom_labellink(which_id = "United Kingdom-2023", label =
+#> "United\nKingdom", : Ignoring unknown parameters: `label`
+#> Warning: Using alpha for a discrete variable is not advised.
+```
+
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+``` r
+  
+
+ggwipe::last_plot_wipe() +
+  facet_wrap(~entities) + 
+  geom_point() + 
+  geom_line() + 
+  aes(color = entities)
+#> Warning: Using alpha for a discrete variable is not advised.
+#> `geom_line()`: Each group consists of only one observation.
+#> ℹ Do you need to adjust the group aesthetic?
+#> `geom_line()`: Each group consists of only one observation.
+#> ℹ Do you need to adjust the group aesthetic?
+#> `geom_line()`: Each group consists of only one observation.
+#> ℹ Do you need to adjust the group aesthetic?
+#> `geom_line()`: Each group consists of only one observation.
+#> ℹ Do you need to adjust the group aesthetic?
+#> `geom_line()`: Each group consists of only one observation.
+#> ℹ Do you need to adjust the group aesthetic?
+#> `geom_line()`: Each group consists of only one observation.
+#> ℹ Do you need to adjust the group aesthetic?
+#> `geom_line()`: Each group consists of only one observation.
+#> ℹ Do you need to adjust the group aesthetic?
+```
+
+![](README_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
 
 ``` r
 StatSum$compute_panel
@@ -638,7 +772,7 @@ nhl_player_births |>
 #> generated.
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 # Part II. Packaging and documentation 🚧 ✅
 
@@ -690,7 +824,7 @@ gapminder::gapminder |>
 #> -65, : Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 
@@ -698,7 +832,7 @@ last_plot() +
   scale_x_log10()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
 ## Phase 3: Settling and testing 🚧 ✅
 
@@ -796,10 +930,15 @@ fs::dir_tree(recurse = T)
 #> │       ├── unnamed-chunk-11-1.png
 #> │       ├── unnamed-chunk-11-2.png
 #> │       ├── unnamed-chunk-12-1.png
+#> │       ├── unnamed-chunk-12-2.png
 #> │       ├── unnamed-chunk-13-1.png
 #> │       ├── unnamed-chunk-13-2.png
+#> │       ├── unnamed-chunk-14-1.png
+#> │       ├── unnamed-chunk-14-2.png
 #> │       ├── unnamed-chunk-15-1.png
 #> │       ├── unnamed-chunk-15-2.png
+#> │       ├── unnamed-chunk-17-1.png
+#> │       ├── unnamed-chunk-17-2.png
 #> │       ├── unnamed-chunk-5-1.png
 #> │       ├── unnamed-chunk-5-2.png
 #> │       ├── unnamed-chunk-7-1.png
