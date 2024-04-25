@@ -299,6 +299,28 @@ geom_labellink <- function(  mapping = NULL,
 ```
 
 ``` r
+geom_labellink_north <- function(...) geom_labellink(label_direction = 90, ...)
+geom_labellink_east <- function(...) geom_labellink(label_direction = 0, ...)
+geom_labellink_south <- function(...) geom_labellink(label_direction = -90, ...)
+geom_labellink_west <- function(...) geom_labellink(label_direction = 180, ...)
+
+geom_labellink_ne <- function(...) geom_labellink(label_direction = 45, ...)
+geom_labellink_se <- function(...) geom_labellink(label_direction = -45, ...)
+geom_labellink_nw <- function(...) geom_labellink(label_direction = 135, ...)
+geom_labellink_sw <- function(...) geom_labellink(label_direction = -135, ...)
+
+geom_labellink_nee <- function(...) geom_labellink(label_direction = 45/2, ...)
+geom_labellink_nne <- function(...) geom_labellink(label_direction = 45/2 + 45, ...)
+geom_labellink_nnw <- function(...) geom_labellink(label_direction = 45/2 + 90, ...)
+geom_labellink_nww <- function(...) geom_labellink(label_direction = 45/2 + 135, ...)
+
+geom_labellink_see <- function(...) geom_labellink(label_direction = -45/2, ...)
+geom_labellink_sse <- function(...) geom_labellink(label_direction = -45/2 - 45, ...)
+geom_labellink_ssw <- function(...) geom_labellink(label_direction = -45/2 - 90, ...)
+geom_labellink_sww <- function(...) geom_labellink(label_direction = -45/2 - 135, ...)
+```
+
+``` r
 gapminder::gapminder |> 
   filter(year == 2002) |> 
   ggplot() + 
@@ -627,109 +649,89 @@ outer_space_objects <- readr::read_csv('https://raw.githubusercontent.com/rforda
 #> 
 #> ℹ Use `spec()` to retrieve the full column specification for this data.
 #> ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-
-outer_space_objects %>% 
-  count(Entity, wt = num_objects) %>% 
-  arrange(-n) %>% 
-  pull(Entity) %>% 
-  .[2:7] ->
-top_appearances  # more than 150
 ```
 
 ``` r
 russia1957lab <- "The first observation in the 'Outerspace objects dataset are two Russian objects in 1957"
 us2023lab <- "The highest recorded number of objects in a year for an entity was 2166 objects from the US in 2023"
 
-outer_space_objects |>
-  arrange(Year) %>% 
-  mutate(Entity_Year = paste(Entity, Year, sep = "-")) %>% 
-  filter(Entity != "World") |> #slice(1107)
-  mutate(entities = ifelse(Entity %in% top_appearances, 
-                           Entity, "other")) |>
+space_objects_title <- "The number of space objects, highlighting top responsible entities<br>the **United States**, **Russia**, **China**, the **United Kingdom**, and **Japan**"
+
+outer_space_objects %>% 
+  filter(Entity != "World") %>% 
+  mutate(EntityLump = fct_lump_n(f = Entity, 
+                                   w = num_objects, n = 5, 
+                                   other_level = "Other")) %>% 
+  mutate(entity_year = paste(Entity, Year, sep = "-")) %>% 
 ggplot() + 
-  aes(Year, num_objects, id = Entity_Year) + 
-  geom_point(aes(color = entities)) + 
-  geom_line(aes(group = Entity), linewidth = .05) +
-  # geom_index() +
-  geom_labellink(which_id = "Russia-1957",
-                 label = russia1957lab |> str_wrap(20),
-                 label_direction = 170) +
-  geom_labellink(which_id = "United States-2023",
-                 label = us2023lab |> str_wrap(20),
-                 prop_range = .15,
-                 label_direction = -45) + 
-  geom_labellink(which_id = "China-2023",
-                 label = "China",
-                 label_direction = -15,
-                 prop_range = .1) + 
-  geom_labellink(which_id = "France-2023",
-                 label = "France",
-                 label_direction = -15,
-                 prop_range = .1) + 
-  geom_labellink(which_id = "Japan-2023",
-                 label = "Japan",
-                 label_direction = 5,
-                 prop_range = .1) +
-    geom_labellink(which_id = "United Kingdom-2023",
-                 label = "United\nKingdom",
-                 label_direction = 10,
-                 prop_range = .1) +
-  aes(alpha = entities != "other") + 
+  aes(Year, num_objects, fill = EntityLump) + 
+  geom_point(shape = 21, size = 4, color = "white", alpha = .8) +
   scale_y_log10() + 
-  labs(title = "The number of objects in Space by entity ") + 
-  annotate(alpha = 0, x  = c(1925, 2060), y = 1, geom = GeomPoint) + 
-  theme(panel.background = element_rect(fill = "snow")) + 
-  theme(plot.background = element_rect(fill = "snow")) + 
-  theme(axis.ticks = element_blank()) + 
-  labs(y = NULL, x = NULL) + 
-  theme() + 
-  # geom_index() + 
-  guides(color = "none") +
-  guides(alpha = "none") + 
-  NULL
-#> Warning in geom_labellink(which_id = "Russia-1957", label =
-#> str_wrap(russia1957lab, : Ignoring unknown parameters: `label`
-#> Warning in geom_labellink(which_id = "United States-2023", label =
-#> str_wrap(us2023lab, : Ignoring unknown parameters: `label`
-#> Warning in geom_labellink(which_id = "China-2023", label = "China",
-#> label_direction = -15, : Ignoring unknown parameters: `label`
-#> Warning in geom_labellink(which_id = "France-2023", label = "France",
-#> label_direction = -15, : Ignoring unknown parameters: `label`
-#> Warning in geom_labellink(which_id = "Japan-2023", label = "Japan",
-#> label_direction = 5, : Ignoring unknown parameters: `label`
-#> Warning in geom_labellink(which_id = "United Kingdom-2023", label =
-#> "United\nKingdom", : Ignoring unknown parameters: `label`
-#> Warning: Using alpha for a discrete variable is not advised.
+  labs(title = space_objects_title)  +
+  theme(title = ggtext::element_markdown()) + 
+  scale_fill_viridis_d(option = "magma")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
-  
 
-ggwipe::last_plot_wipe() +
-  facet_wrap(~entities) + 
-  geom_point() + 
-  geom_line() + 
-  aes(color = entities)
-#> Warning: Using alpha for a discrete variable is not advised.
-#> `geom_line()`: Each group consists of only one observation.
-#> ℹ Do you need to adjust the group aesthetic?
-#> `geom_line()`: Each group consists of only one observation.
-#> ℹ Do you need to adjust the group aesthetic?
-#> `geom_line()`: Each group consists of only one observation.
-#> ℹ Do you need to adjust the group aesthetic?
-#> `geom_line()`: Each group consists of only one observation.
-#> ℹ Do you need to adjust the group aesthetic?
-#> `geom_line()`: Each group consists of only one observation.
-#> ℹ Do you need to adjust the group aesthetic?
-#> `geom_line()`: Each group consists of only one observation.
-#> ℹ Do you need to adjust the group aesthetic?
-#> `geom_line()`: Each group consists of only one observation.
-#> ℹ Do you need to adjust the group aesthetic?
+
+ggtextExtra:::use_fill_scale_in_title_words(last_plot(), i = 1) + 
+  guides(fill = "none")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
+
+``` r
+last_plot() +
+  geom_line(aes(group = Entity), linewidth = .05) +
+  aes(id = entity_year) + 
+  geom_labellink_north(which_id = "Russia-1957",
+                 label = russia1957lab |> str_wrap(20),
+                 prop_range = .55, linetype = "dashed") +
+  geom_labellink_se(which_id = "United States-2023",
+                 label = us2023lab |> str_wrap(20),
+                 prop_range = .15) + 
+  geom_labellink_se(which_id = "China-2023",
+                 prop_range = .1) + 
+  geom_labellink_nee(which_id = "Japan-2023",
+                 prop_range = .1) +
+  geom_labellink_nee(which_id = "United Kingdom-2023",
+                 label = "United Kingdom\n2023",
+                 prop_range = .1) +
+  annotate(alpha = 0, x  = c(1945, 2060), y = 1, geom = GeomPoint) + 
+  theme_minimal() + 
+  theme(title = ggtext::element_markdown()) + 
+  theme(panel.grid.major.x = element_blank()) + 
+  theme(panel.grid.minor = element_blank()) +
+  theme(plot.title.position = "plot") +
+  labs(y = NULL, x = NULL) + 
+  theme(title = ggtext::element_markdown()) + 
+  # geom_index() + 
+  guides(fill = "none") +
+  guides(alpha = "none") + 
+  NULL
+#> Warning in geom_labellink(label_direction = 90, ...): Ignoring unknown
+#> parameters: `label`
+#> Warning in geom_labellink(label_direction = 90, ...): Ignoring unknown
+#> parameters: `linetype`
+#> Warning in geom_labellink(label_direction = -45, ...): Ignoring unknown
+#> parameters: `label`
+#> Warning in geom_labellink(label_direction = 45/2, ...): Ignoring unknown
+#> parameters: `label`
+```
+
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+``` r
+
+ggchalkboard:::geoms_chalk_on(chalk_color = "grey20")
+
+last_plot()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
 
 ``` r
 StatSum$compute_panel
@@ -772,7 +774,7 @@ nhl_player_births |>
 #> generated.
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 # Part II. Packaging and documentation 🚧 ✅
 
@@ -824,7 +826,7 @@ gapminder::gapminder |>
 #> -65, : Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 
@@ -832,7 +834,7 @@ last_plot() +
   scale_x_log10()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
 
 ## Phase 3: Settling and testing 🚧 ✅
 
@@ -937,8 +939,11 @@ fs::dir_tree(recurse = T)
 #> │       ├── unnamed-chunk-14-2.png
 #> │       ├── unnamed-chunk-15-1.png
 #> │       ├── unnamed-chunk-15-2.png
+#> │       ├── unnamed-chunk-16-1.png
 #> │       ├── unnamed-chunk-17-1.png
 #> │       ├── unnamed-chunk-17-2.png
+#> │       ├── unnamed-chunk-18-1.png
+#> │       ├── unnamed-chunk-18-2.png
 #> │       ├── unnamed-chunk-5-1.png
 #> │       ├── unnamed-chunk-5-2.png
 #> │       ├── unnamed-chunk-7-1.png
