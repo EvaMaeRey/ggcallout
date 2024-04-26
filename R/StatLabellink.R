@@ -1,4 +1,4 @@
-compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_range = .1, prop_pointer_pad = .0175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
+compute_labellink <- function(data, scales, label_direction = 180 + 45, link_prop = .1, prop_pointer_pad = .0175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
   
   if(is.null(data$id)){data$id <- "hello world"}
   if(is.null(which_index)){which_index <- which(data$id %in% which_id)}
@@ -12,11 +12,11 @@ compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_ran
   range_y <- diff(range(data$y)) # look at range of plot?
   xdir <- cos(pi*label_direction/180)
   ydir <- sin(pi*label_direction/180)
-  xpush <- range_x * prop_range * xdir
-  ypush <- range_y * prop_range * ydir
+  xpush <- range_x * link_prop * xdir
+  ypush <- range_y * link_prop * ydir
   
-  xpointer_pad <- range_x *xdir* prop_pointer_pad
-  ypointer_pad <- range_y *ydir* prop_pointer_pad
+  xpointer_pad <- range_x * xdir * prop_pointer_pad
+  ypointer_pad <- range_y * ydir * prop_pointer_pad
   
   more_x_than_y <- abs(xdir) > abs(ydir)
   
@@ -24,6 +24,8 @@ compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_ran
   if(is.null(vjust)){vjust <- ifelse(more_x_than_y, .5, sign(ydir) != 1)}
 
   data |> 
+    # dplyr::mutate(label_length = nchar(label)) |>
+    # dplyr::mutate(link_prop = ifelse(label_length > 10, .2, .1)) |>
     dplyr::mutate(x = x + xpush) |>
     dplyr::mutate(y = y + ypush) |>
     dplyr::mutate(xend = .data$x - (xpush - xpointer_pad)) |>

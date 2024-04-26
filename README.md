@@ -67,7 +67,7 @@ ggplot() +
   geom_labellink(which_id = "Brazil",
                  label = "People want to\nknow about Brazil",
                  label_direction = -70,
-                 prop_range = .2) + 
+                 link_prop = .2) + 
 ```
 
 # Part I. Work out functionality 🚧 ✅
@@ -79,7 +79,7 @@ readme2pkg::chunk_to_r("StatLabellink")
 ```
 
 ``` r
-compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_range = .1, prop_pointer_pad = .0175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
+compute_labellink <- function(data, scales, label_direction = 180 + 45, link_prop = .1, prop_pointer_pad = .0175, hjust = NULL, vjust = NULL, which_index = NULL, which_id = NULL){
   
   if(is.null(data$id)){data$id <- "hello world"}
   if(is.null(which_index)){which_index <- which(data$id %in% which_id)}
@@ -93,11 +93,11 @@ compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_ran
   range_y <- diff(range(data$y)) # look at range of plot?
   xdir <- cos(pi*label_direction/180)
   ydir <- sin(pi*label_direction/180)
-  xpush <- range_x * prop_range * xdir
-  ypush <- range_y * prop_range * ydir
+  xpush <- range_x * link_prop * xdir
+  ypush <- range_y * link_prop * ydir
   
-  xpointer_pad <- range_x *xdir* prop_pointer_pad
-  ypointer_pad <- range_y *ydir* prop_pointer_pad
+  xpointer_pad <- range_x * xdir * prop_pointer_pad
+  ypointer_pad <- range_y * ydir * prop_pointer_pad
   
   more_x_than_y <- abs(xdir) > abs(ydir)
   
@@ -105,6 +105,8 @@ compute_labellink <- function(data, scales, label_direction = 180 + 45, prop_ran
   if(is.null(vjust)){vjust <- ifelse(more_x_than_y, .5, sign(ydir) != 1)}
 
   data |> 
+    # dplyr::mutate(label_length = nchar(label)) |>
+    # dplyr::mutate(link_prop = ifelse(label_length > 10, .2, .1)) |>
     dplyr::mutate(x = x + xpush) |>
     dplyr::mutate(y = y + ypush) |>
     dplyr::mutate(xend = .data$x - (xpush - xpointer_pad)) |>
@@ -419,7 +421,7 @@ airquality |>
   geom_labellink(which_index = 5,
                  label_direction = 100,
                  hjust = .5,
-                 prop_range = .2,
+                 link_prop = .2,
                  label = "Here's a relatively a low temperature observation" |> str_wrap(20))
 #> Warning: Removed 42 rows containing missing values or values outside the scale
 #> range.
@@ -441,7 +443,7 @@ datasets::anscombe |>
                  label = "This is the high-leverage observation in Anscombe's #4" |>
                    str_wrap(18),
                  label_direction = -170,
-                 prop_range = .25) 
+                 link_prop = .25) 
 #> Warning in geom_labellink(which_index = 8, label = str_wrap("This is the
 #> high-leverage observation in Anscombe's #4", : Ignoring unknown parameters:
 #> `label`
@@ -456,7 +458,7 @@ anscombe |>
   geom_point() + 
   geom_labellink(which_index = 2,
                  label = "This is an observation in Anscombe's first dataset" |> str_wrap(15),
-                 prop_range = .2,
+                 link_prop = .2,
                  label_direction = 120
                  )
 #> Warning in geom_labellink(which_index = 2, label = str_wrap("This is an
@@ -476,7 +478,7 @@ gapminder::gapminder |>
   facet_wrap(~continent) + 
   geom_labellink(which_id = "Chile",
                  label_direction = -45,
-                 prop_range = .5)
+                 link_prop = .5)
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
@@ -491,7 +493,7 @@ mpg |>
   geom_labellink(which_index = 50,
                  label = "A point represents a single make and model in the mpg dataset: 'Fuel economy data from 1999 to 2008 for 38 popular models of cars'" |> str_wrap(15),
                  label_direction = 110,
-                 prop_range = .2) + 
+                 link_prop = .2) + 
     geom_labellink(which_id = "c",
                    aes(id = fl),
                  label_direction = 120,
@@ -528,15 +530,15 @@ mtcars |>
 ``` r
   geom_labellink(which_id = "Mazda RX4",
                  label_direction = 85,
-                 prop_range = .2)
+                 link_prop = .2)
 #> [[1]]
 #> geom_segment: arrow = list(angle = 30, length = 0.1, ends = 2, type = 2), na.rm = FALSE
-#> labellink: na.rm = FALSE, which_id = Mazda RX4, label_direction = 85, prop_range = 0.2
+#> labellink: na.rm = FALSE, which_id = Mazda RX4, label_direction = 85, link_prop = 0.2
 #> position_identity 
 #> 
 #> [[2]]
 #> geom_label: label.size = 0, label.padding = 0.4, na.rm = FALSE
-#> labellink: na.rm = FALSE, which_id = Mazda RX4, label_direction = 85, prop_range = 0.2
+#> labellink: na.rm = FALSE, which_id = Mazda RX4, label_direction = 85, link_prop = 0.2
 #> position_identity
 
 mtcars |>
@@ -553,7 +555,7 @@ mtcars |>
   geom_labellink(which_index = 15,
                  label = "The Cadillac Fleetwood had pretty terrible milage" |> str_wrap(12),
                  label_direction = 130,
-                 prop_range = .2)
+                 link_prop = .2)
 #> Warning in geom_labellink(which_index = 18, label = str_wrap("The Fiat 128 has
 #> great milage compared to other makes in the mtcars dataset", : Ignoring unknown
 #> parameters: `label`
@@ -612,11 +614,11 @@ nhl_player_births |>
   geom_labellink(which_index = 1,
                  label = "Jack Lviolette has the earliest birthday in the dataset: July 27, 1879" |> str_wrap(30),
                  label_direction = 60,
-                 prop_range = .3,
+                 link_prop = .3,
                  color = "grey10") +
   geom_labellink(which_index = nrow(nhl_player_births),
                  label = "Connor Bedard has the most recent birthday in the dataset: July 17, 2005" |> str_wrap(25),
-                 prop_range = .2,
+                 link_prop = .2,
                  label_direction = -100,
                  color = "grey10")
 #> Warning in geom_labellink(which_index = 1, label = str_wrap("Jack Lviolette has
@@ -652,63 +654,97 @@ outer_space_objects <- readr::read_csv('https://raw.githubusercontent.com/rforda
 ```
 
 ``` r
-russia1957lab <- "The first observation in the 'Outerspace objects dataset are two Russian objects in 1957"
-us2023lab <- "The highest recorded number of objects in a year for an entity was 2166 objects from the US in 2023"
-
-space_objects_title <- "The number of space objects, highlighting top responsible entities<br>the **United States**, **Russia**, **China**, the **United Kingdom**, and **Japan**"
+space_objects_title <- "Astronomical growth:  The number of space objects has grown exponentially <br>Here we see growth by the top four object-introducing entities<br> which are the **United States**, **Russia**, **China**, and the **United Kingdom**"
 
 outer_space_objects %>% 
   filter(Entity != "World") %>% 
   mutate(EntityLump = fct_lump_n(f = Entity, 
-                                   w = num_objects, n = 5, 
+                                   w = num_objects, n = 4, 
                                    other_level = "Other")) %>% 
-  mutate(entity_year = paste(Entity, Year, sep = "-")) %>% 
+  mutate(entity_year = paste(Entity, Year, sep = "\n")) %>% 
+  filter(num_objects != 0) %>% 
+  filter(EntityLump != "Other") %>% 
 ggplot() + 
   aes(Year, num_objects, fill = EntityLump) + 
-  geom_point(shape = 21, size = 4, color = "white", alpha = .8) +
-  scale_y_log10() + 
-  labs(title = space_objects_title)  +
-  theme(title = ggtext::element_markdown()) + 
-  scale_fill_viridis_d(option = "magma")
+  geom_line(aes(group = Entity), color = "gray") + 
+  geom_point(data = . %>% filter(EntityLump != "Other"),
+    shape = 21, size = 4, color = "white", alpha = .8) +
+  scale_y_log10(breaks = c(1,10, 100, 1000), 
+                labels = c("1\nobject", "10", "100", "1000\nobjects")) + 
+  labs(y = NULL, x = NULL) +
+  labs(title = space_objects_title) 
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 
-
-ggtextExtra:::use_fill_scale_in_title_words(last_plot(), i = 1) + 
-  guides(fill = "none")
+last_plot() +
+  theme_minimal() + 
+  theme(title = ggtext::element_markdown()) + 
+  scale_fill_viridis_d(option = "viridis", end = .8) +
+  theme(title = ggtext::element_markdown()) + 
+  theme(panel.grid.major.x = element_blank()) + 
+  theme(panel.grid.minor = element_blank()) +
+  theme(plot.title.position = "plot") + 
+  ggstamp::stamp_text(x = 1990, y = 75, 
+                      label = "#tidytuesday viz\nfor educational\n purposes only",
+                      alpha = .1, size = 18, angle = 20) + 
+  labs(caption = "Data: from #tidytuesday project  2024-04-23/outer_space_objects.csv Accessed 2024-04-26")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
 
 ``` r
+
+ggtextExtra:::use_fill_scale_in_title_words(last_plot(), i = 2) + 
+  guides(fill = "none")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->
+
+``` r
+russia1957lab <- "The USSR launched two objects into space in 1957"
+us2023lab <- "2166 objects were launched from the US in 2023"
+
 last_plot() +
   geom_line(aes(group = Entity), linewidth = .05) +
   aes(id = entity_year) + 
-  geom_labellink_north(which_id = "Russia-1957",
-                 label = russia1957lab |> str_wrap(20),
-                 prop_range = .55, linetype = "dashed") +
-  geom_labellink_se(which_id = "United States-2023",
-                 label = us2023lab |> str_wrap(20),
-                 prop_range = .15) + 
-  geom_labellink_se(which_id = "China-2023",
-                 prop_range = .1) + 
-  geom_labellink_nee(which_id = "Japan-2023",
-                 prop_range = .1) +
-  geom_labellink_nee(which_id = "United Kingdom-2023",
-                 label = "United Kingdom\n2023",
-                 prop_range = .1) +
-  annotate(alpha = 0, x  = c(1945, 2060), y = 1, geom = GeomPoint) + 
-  theme_minimal() + 
+  geom_labellink_north(which_id = "Russia\n1957",
+                 label = russia1957lab |> str_wrap(15),
+                 link_prop = .65, linetype = "dashed") +
+  geom_labellink_see(which_id = "United States\n2023",
+                 label = us2023lab |> str_wrap(15),
+                 link_prop = .15) + 
+  geom_labellink_se(which_id = "China\n2023",
+                 link_prop = .1) +
+  geom_labellink_se(which_id = "Russia\n2023",
+                 link_prop = .1) +
+  geom_labellink_ne(which_id = "United Kingdom\n2023",
+                 label = "UK\n2023",
+                 link_prop = .1) +
+  geom_labellink_north(which_id = "Russian\n1985",
+                       label = "USSR",
+                 link_prop = .1) +
+  geom_labellink_south(which_id = "United States\n1974",
+                       label = "USA",
+                 link_prop = .07) +
+  geom_labellink_south(which_id = "United Kingdom\n2011",
+                       label = "UK",
+                 link_prop = .08) +
+  geom_labellink_nw(which_id = "China\n1997",
+                       label = "China",
+                 link_prop = .07) +
+  annotate(alpha = 0, 
+           x  = c(1945, 2060), 
+           y = 1, 
+           geom = GeomPoint) + 
   theme(title = ggtext::element_markdown()) + 
   theme(panel.grid.major.x = element_blank()) + 
   theme(panel.grid.minor = element_blank()) +
   theme(plot.title.position = "plot") +
   labs(y = NULL, x = NULL) + 
   theme(title = ggtext::element_markdown()) + 
-  # geom_index() + 
   guides(fill = "none") +
   guides(alpha = "none") + 
   NULL
@@ -716,22 +752,27 @@ last_plot() +
 #> parameters: `label`
 #> Warning in geom_labellink(label_direction = 90, ...): Ignoring unknown
 #> parameters: `linetype`
-#> Warning in geom_labellink(label_direction = -45, ...): Ignoring unknown
+#> Warning in geom_labellink(label_direction = -45/2, ...): Ignoring unknown
 #> parameters: `label`
-#> Warning in geom_labellink(label_direction = 45/2, ...): Ignoring unknown
+#> Warning in geom_labellink(label_direction = 45, ...): Ignoring unknown
+#> parameters: `label`
+#> Warning in geom_labellink(label_direction = 90, ...): Ignoring unknown
+#> parameters: `label`
+#> Warning in geom_labellink(label_direction = -90, ...): Ignoring unknown parameters: `label`
+#> Ignoring unknown parameters: `label`
+#> Warning in geom_labellink(label_direction = 135, ...): Ignoring unknown
 #> parameters: `label`
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
-
 ggchalkboard:::geoms_chalk_on(chalk_color = "grey20")
 
 last_plot()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
 StatSum$compute_panel
@@ -774,7 +815,7 @@ nhl_player_births |>
 #> generated.
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 # Part II. Packaging and documentation 🚧 ✅
 
@@ -826,7 +867,7 @@ gapminder::gapminder |>
 #> -65, : Ignoring unknown parameters: `label`
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
 
@@ -834,7 +875,7 @@ last_plot() +
   scale_x_log10()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
 
 ## Phase 3: Settling and testing 🚧 ✅
 
@@ -937,6 +978,7 @@ fs::dir_tree(recurse = T)
 #> │       ├── unnamed-chunk-13-2.png
 #> │       ├── unnamed-chunk-14-1.png
 #> │       ├── unnamed-chunk-14-2.png
+#> │       ├── unnamed-chunk-14-3.png
 #> │       ├── unnamed-chunk-15-1.png
 #> │       ├── unnamed-chunk-15-2.png
 #> │       ├── unnamed-chunk-16-1.png
@@ -944,6 +986,8 @@ fs::dir_tree(recurse = T)
 #> │       ├── unnamed-chunk-17-2.png
 #> │       ├── unnamed-chunk-18-1.png
 #> │       ├── unnamed-chunk-18-2.png
+#> │       ├── unnamed-chunk-19-1.png
+#> │       ├── unnamed-chunk-19-2.png
 #> │       ├── unnamed-chunk-5-1.png
 #> │       ├── unnamed-chunk-5-2.png
 #> │       ├── unnamed-chunk-7-1.png
